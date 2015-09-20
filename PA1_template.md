@@ -19,7 +19,8 @@ Prior to beginning analysis, some library packages that will be used needed to b
 Two functions that are useful throughout the process are also created: NaRmMean and NaRmMedian.
 These are simply the mean and median functions with the default reset so that NAs are ignored,
 which will be useful for Questions 1 and 2.  
-```{r Housekeeping}
+
+```r
       ##Library Calls
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(ggplot2))
@@ -41,7 +42,8 @@ missing completely.
   
 ### data loading and preliminary inspection
   
-```{r Data loading and preliminary inspection}
+
+```r
       ##Acquire data
 ActivityZipped<-tempfile()
 download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",ActivityZipped,"curl")
@@ -50,18 +52,33 @@ ActivityData<-data.table()
 ActivityData<-read.csv(unz(ActivityZipped,"activity.csv"))
       ##First inspection
 summary(ActivityData)
+```
+
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##  NA's   :2304     (Other)   :15840
+```
+
+```r
 PercentStepsMissing<-100*2304/17568
 ```
   
 The first summary of ActivityData showed that a value for "steps" was missing
-in `r formatC(PercentStepsMissing,digits=1,format="f")`% of the data, a proportion
+in 13.1% of the data, a proportion
 more than large enough to affect the results of analysis if it were all concentrated in one area.
 Therefore a quick summary of the missing data cases was prepared to see whether missing values for 
 steps were concentrated in a few areas or scattered throughout the data set.
   
 ### examination of distribution of missing data
   
-```{r Examination of distribution of missing data}
+
+```r
 ActivityDataNAs<-data.table()
 ActivityDataNAs<-ActivityData[is.na(ActivityData$steps),]
 WhichDatesMissingSteps<-as.Date(unique(ActivityDataNAs$date))
@@ -69,8 +86,8 @@ NumberDatesMissingSteps<-length(WhichDatesMissingSteps)
 WhichDaysMissingSteps<-weekdays(WhichDatesMissingSteps)
 ```
 Pulling out the rows where the steps value was missing revealed that the record was actually missing 
-all data for `r formatC(NumberDatesMissingSteps,digits=0,format="f")` complete days. Those dates were `r WhichDatesMissingSteps`, 
-which fall on the weekdays `r WhichDaysMissingSteps`.
+all data for 8 complete days. Those dates were 2012-10-01, 2012-10-08, 2012-11-01, 2012-11-04, 2012-11-09, 2012-11-10, 2012-11-14, 2012-11-30, 
+which fall on the weekdays Monday, Monday, Thursday, Sunday, Friday, Saturday, Wednesday, Friday.
 This information provided some assurance that since missing data were distributed evenly across 
 intervals and rough proportionately between weekdays and weekends, the answers for Questions 1 and 2 
  would not be severely affected. It also provided a good starting point for Questions 3 and 4.  
@@ -83,7 +100,8 @@ step counts, and preparing a histogram of daily step counts.
   
 ### initial grouping and summing of steps by date, exported to dataset TotalStepsByDate
   
-```{r initial grouping and summing of steps by date}
+
+```r
 Steps_By_Date<-data.table()
 Steps_By_Date<-ActivityData %>% group_by(date)
 TotalStepsByDate<-Steps_By_Date%>%summarise_each(funs(sum),steps)
@@ -91,19 +109,21 @@ TotalStepsByDate<-Steps_By_Date%>%summarise_each(funs(sum),steps)
   
 ### calculate requested statistics 
   
-```{r calculate requested statistics}
+
+```r
 #uses functions defined above to ignore NAs
 MeanTotalDailySteps<-NaRmMean(TotalStepsByDate$steps) 
 MedianTotalDailySteps<-NaRmMedian(TotalStepsByDate$steps)
 ```
 The mean total daily steps, ignoring NAs, was found to 
-be `r formatC(MeanTotalDailySteps,digits=0,format="f")`, quite close to the median total daily 
-steps of `r formatC(MedianTotalDailySteps,digits=0)`. Closeness of mean and median 
+be 10766, quite close to the median total daily 
+steps of 10765. Closeness of mean and median 
 suggests a normal or binomial distribution. 
   
 ### histogram of daily total steps 
   
-```{r histogram of daily total steps,fig.height=8,fig.width=12}
+
+```r
 TotalStepsPlot<-ggplot(TotalStepsByDate) #setting up the histogram
 TotalStepsPlot<-TotalStepsPlot + aes(TotalStepsByDate$steps)
 TotalStepsPlot<-TotalStepsPlot + geom_histogram(binwidth=1250, 
@@ -118,6 +138,8 @@ TotalStepsPlot<-TotalStepsPlot + labs(y="Days")
 TotalStepsPlot<-TotalStepsPlot + theme_bw(base_family = 'Helvetica')
 TotalStepsPlot
 ```
+
+![plot of chunk histogram of daily total steps](figure/histogram of daily total steps-1.png) 
   
 Given that for this plot, each day is a case, and there are 
 therefore only 61 cases, the plot looks to be in good accord with
@@ -128,7 +150,8 @@ further investigation.
   
 ### initial grouping and finding means of steps by interval, exported to AverageIntervalSteps  
   
-```{r initial grouping and finding means of steps by interval}
+
+```r
 Steps_By_Interval<-data.table()
 Steps_By_Interval<-ActivityData %>% group_by(interval)
 AverageIntervalSteps<-Steps_By_Interval%>%summarise_each(funs(NaRmMean),steps)
@@ -136,7 +159,8 @@ AverageIntervalSteps<-Steps_By_Interval%>%summarise_each(funs(NaRmMean),steps)
   
 ### convert intervals to class 'times' so that x axis will scale properly
   
-```{r convert intervals to class times}
+
+```r
 AverageIntervalSteps$hour<-as.integer(AverageIntervalSteps$interval/100) #extract hour
 AverageIntervalSteps$minutes<-AverageIntervalSteps$interval-100*AverageIntervalSteps$hour #extract minutes
 AverageIntervalSteps$CharacterHour<-as.character(AverageIntervalSteps$hour) #convert hour to character
@@ -160,15 +184,17 @@ AverageIntervalSteps<-AverageIntervalSteps[,1:2] #discard working variables
   
 ### calculate the maximum average interval steps  
   
-```{r calculate the maximum average interval steps}
+
+```r
 MaxAverageIntervalSteps <- max(AverageIntervalSteps$steps)
 ```
   
-The maximum number of average interval steps was `r formatC(MaxAverageIntervalSteps,digits=1,format="f")`.  
+The maximum number of average interval steps was 206.2.  
   
 ### lineplot time series interval v. average steps  
   
-```{r lineplot time series interval v. average steps,fig.height=8,fig.width=12}
+
+```r
 ## Xbreaks, which are specifications for x axis, all need to be in class times
 begin<-times("00:00:00")
 end<-times("23:55:00")
@@ -185,6 +211,8 @@ AverageIntervalStepsPlot<-AverageIntervalStepsPlot + labs(y="Average number of s
 AverageIntervalStepsPlot<-AverageIntervalStepsPlot + theme_bw(base_family = 'Helvetica')
 AverageIntervalStepsPlot
 ```
+
+![plot of chunk lineplot time series interval v. average steps](figure/lineplot time series interval v. average steps-1.png) 
   
 **Observable features here include: **  
 1. the subject is nearly stationary between midnight and about 5:30.  
@@ -210,7 +238,8 @@ intervals down to a step value of 0, and has very little effect on higher values
   
 ### interpolate values into rows with missing data for steps
   
-```{r Interpolate values into  rows with missing data for steps}
+
+```r
 MissingStepsSelector<-is.na(ActivityData$steps)
 InsertIntervalAverages<-MissingStepsSelector*round(AverageIntervalSteps$steps)
 ActivityData$steps[is.na(ActivityData$steps)]<-0
@@ -219,7 +248,8 @@ ActivityData$steps<-ActivityData$steps+InsertIntervalAverages
   
 ### re-run same procedure as in Question 1 to generate new results for comparison
   
-```{r Re-run Question 1 Procedure}
+
+```r
 ##initial grouping and summing of steps by date, exported to TotalStepsByDate
 Steps_By_Date<-data.table()
 Steps_By_Date<-ActivityData %>% group_by(date)
@@ -232,15 +262,16 @@ InterpolatedMedian<-NaRmMedian(TotalStepsByDate$steps)
   
 ### comparison of statistical results with Question 1 results 
   
-The mean total steps per day with interpolated values is `r formatC(InterpolatedMean,digits=0,format="f")`, 
-compared to the original uninterpolated value of `r formatC(MeanTotalDailySteps,digits=0,format="f")`.  
-The median total steps per day with interpolated values is `r formatC(InterpolatedMedian,digits=0,format="f")`, 
-compared to the original uninterpolated value of  `r formatC(MedianTotalDailySteps,digits=0,format="f")`.  The 
+The mean total steps per day with interpolated values is 10766, 
+compared to the original uninterpolated value of 10766.  
+The median total steps per day with interpolated values is 10762, 
+compared to the original uninterpolated value of  10765.  The 
 difference between them is insignificant.
   
 ### plot of the interpolated data -- new histogram of daily total steps 
   
-```{r interpolated histogram of daily total steps,fig.height=8,fig.width=12}
+
+```r
 InterpolatedTotalStepsPlot<-ggplot(TotalStepsByDate) #setting up the histogram
 InterpolatedTotalStepsPlot<-InterpolatedTotalStepsPlot + aes(TotalStepsByDate$steps)
 InterpolatedTotalStepsPlot<-InterpolatedTotalStepsPlot + geom_histogram(binwidth=1250, 
@@ -255,6 +286,8 @@ InterpolatedTotalStepsPlot<-InterpolatedTotalStepsPlot + labs(y="Days")
 InterpolatedTotalStepsPlot<-InterpolatedTotalStepsPlot + theme_bw(base_family = 'Helvetica')
 InterpolatedTotalStepsPlot
 ```
+
+![plot of chunk interpolated histogram of daily total steps](figure/interpolated histogram of daily total steps-1.png) 
   
 ### comparison of the two histograms  
   
@@ -272,10 +305,11 @@ and all of them were added to the central column.  Inspection shows, in fact, th
 there were 12 values in the central column range, corresponding to the range 10,000-11,250, and in the new graph 
 there are 20, with no other column of the histogram changed. To further verify this, I checked the sum of the 
 interval averages:
-```{r check sum of interval averages}
+
+```r
 MissingDataIntervalAverageSum<-sum(AverageIntervalSteps$steps)
 ```
-The result was `r formatC(MissingDataIntervalAverageSum,digits=0,format="f")`, 
+The result was 10766, 
 which of course is between 10,000 and 11,250. 
 So the actual effect of this method of interpolation was merely to exaggerate the central tendency in the data.
 
@@ -289,7 +323,8 @@ variables DayOWk IsWeekend will be created and then erased in the process.
   
 ### Housekeeping: formatting the variables in ActivityData, creating the new DayType variable, and regrouping  
   
-```{r formatting the variables in ActivityData and creating the new DayType variable}
+
+```r
 ActivityData$date<-as.Date(ActivityData$date)
 ActivityData$interval<-as.character(AverageIntervalSteps$interval)
 ActivityData$interval<-times(ActivityData$interval)
@@ -302,14 +337,16 @@ ActivityData<-ActivityData[,1:4]
 The next task is to regroup the dataset on two variables: interval and DayType, so that we can produce
 the breakout of two time series to compare.
 
-```{r regrouping the dataset}
+
+```r
 StepsXIntDayType<-data.table()
 StepsXIntDayType<-ActivityData %>% group_by(interval,DayType)
 AverageIntervalDayTypeSteps<-StepsXIntDayType%>%summarise_each(funs(NaRmMean),steps)
 ```
 ### drawing the requested plots of interval average steps for weekends and weekdays
   
-```{r lineplot two time series of interval average steps for weekend and weekday,fig.height=8,fig.width=12}
+
+```r
 ##Xbreaks, which are specifications for x axis, all need to be in class times
 begin<-times("00:00:00")
 end<-times("23:55:00")
@@ -327,6 +364,8 @@ AvgIntDTStpsPlot<-AvgIntDTStpsPlot + facet_grid(DayType ~ .)
 AvgIntDTStpsPlot<-AvgIntDTStpsPlot + theme_bw(base_family = 'Helvetica')
 AvgIntDTStpsPlot
 ```
+
+![plot of chunk lineplot two time series of interval average steps for weekend and weekday](figure/lineplot two time series of interval average steps for weekend and weekday-1.png) 
   
 ### observations about average steps (interpolated) versus interval and DayType  
   
