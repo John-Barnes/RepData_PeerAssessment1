@@ -241,9 +241,12 @@ economically developed areas.
   
 ### Question 3: Imputing missing values (and recalculating total steps mean, median, and histogram)  
   
-Taking advantage of the earlier inspection of the data: steps data are the only data missing, and they
-are missing from exactly eight days; on each of those days, all 288 of the 5 minute intervals are missing. 
-Furthermore, the dataset begins with midnight of October 1 and ends at 23:55 of Nov 30 with no skipped days.  
+Taking advantage of the earlier inspection of the data:  the
+only missing data are for steps. They are missing from exactly
+eight days; on each of those days, all 288 of the 5 minute 
+intervals are missing. Furthermore, the
+dataset begins with midnight of October 1 and ends at 23:55 of Nov 30 with
+no skipped days.  
   
 Thus, we can take the average-per-interval vector from question 2, which
 runs from 00:00 to 23:55, and add it only to the days where NAs occur.
@@ -253,7 +256,7 @@ there is an NA will result in a corrections vector that has a numeric value
 of the interval average wherever there is an NA, and zero otherwise.  
   
 After changing NAs to zeros and adding, the new interpolated values for
-$steps will be complete. I chose to round the averages because it gets rid
+$steps will be complete. I chose to round the averages to integers because it gets rid
 of the absurdity of fractional steps in the data, reduces the 
 very-low-step intervals down to a step value of 0, and has very little
 effect on higher values.  
@@ -272,7 +275,7 @@ ActivityData$steps<-ActivityData$steps+InsertIntervalAverages
 #### re-run same procedure as in Question 1 to generate new results for comparison
 
 ```r
-# initial grouping and summing of steps by date, exported to dataset TotalStepsByDate  
+# initial grouping-summing of steps by date, exported to dataset TotalStepsByDate  
 Steps_By_Date<-data.table()
 Steps_By_Date<-ActivityData %>% group_by(date)
 TotalStepsByDate<-Steps_By_Date%>%summarise_each(funs(sum),steps)
@@ -286,7 +289,8 @@ TotalStepsByDate<-Steps_By_Date%>%summarise_each(funs(sum),steps)
 MeanTotalDailySteps<-NaRmMean(TotalStepsByDate$steps) 
 MedianTotalDailySteps<-NaRmMedian(TotalStepsByDate$steps)
 ```
-The mean total daily steps (with interval values interpolated for NAs) was found to 
+With interval values interpolated for NAs, mean total daily steps
+was found to 
 be 10766, quite close to the median total daily 
 steps of 10762. Both these were very close to results found the first time, for reasons discussed below. 
   
@@ -303,8 +307,8 @@ TotalStepsPlot<-TotalStepsPlot + geom_histogram(binwidth=1250,
       #binwidth chosen to have about 20 bins, 8 bins=10,000, 
       #about 3 cases/bin for a uniform distribution
 TotalStepsPlot<-TotalStepsPlot + scale_y_continuous(breaks=0:15)
-TotalStepsPlot<-TotalStepsPlot + labs(title="Distribution of Total Daily Steps")
-TotalStepsPlot<-TotalStepsPlot + labs(x="Total Steps in One Day")
+TotalStepsPlot<-TotalStepsPlot + labs(title="Distribution of Total Daily Steps With Interpolated Values")
+TotalStepsPlot<-TotalStepsPlot + labs(x="Total Steps per One Day")
 TotalStepsPlot<-TotalStepsPlot + labs(y="Days")
 
 TotalStepsPlot
@@ -314,7 +318,7 @@ TotalStepsPlot
 
 #### comparison of the two histograms  
 
-Obviously the kurtosis (spikiness) of the distribution has become much more
+Obviously  kurtosis (spikiness) of the distribution has become much more
 acute with the addition of the interpolated values. The histogram still
 looks roughly like it might be a normal or a  binomial distribution, but
 the peak is proportionately higher, and the standard deviation smaller.
@@ -322,11 +326,11 @@ the peak is proportionately higher, and the standard deviation smaller.
 Yet the mean and median are almost the same; the overall center didn't
 change much, but the distribution changed fairly drastically.
   
-The most likely cause of this is simply that because missing values were
+This is because missing values were
 concentrated in 8 days, and because the average for each interval was used,
 each of those 8 days received the same interpolated values. This in turn
-meant that all eight missing days were assigned the same sum,and all of
-them were added to the central column.  Inspection shows, in fact, that in
+assigned all eight missing days the same total steps, so all 8 missing days
+were added to the central column.  Inspection shows, in fact, that in
 the original histogram, there were 12 values in the central column range,
 corresponding to the range 10,000-11,250, and in the new graph there are
 20, with no other column of the histogram changed. To further verify this,
