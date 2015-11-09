@@ -167,8 +167,8 @@ MeanTotalDailySteps<-NaRmMean(TotalStepsByDate$steps)
 MedianTotalDailySteps<-NaRmMedian(TotalStepsByDate$steps)
 ```
   
-**Mean total daily steps, ignoring NAs:** `rformatC(MeanTotalDailySteps,digits=0,format="f")`   
-**Median total daily steps, ignoring NAs:** `rformatC(MedianTotalDailySteps,digits=0,format="f")`  
+**Mean total daily steps, ignoring NAs:** 10766   
+**Median total daily steps, ignoring NAs:** 10765  
   
 ### histogram of daily total steps 
   

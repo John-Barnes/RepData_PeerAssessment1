@@ -5,7 +5,9 @@ This draft is prepared from an earlier draft of the Reproducible Research Peer A
   
 In this draft I’ve done occasional cleanup and “pretty-printing” here and there to make a nice looking portfolio project, and because the process of tidying up has forced me to re-read my old code in detail, noting explanations to myself about what I’ve done in the comments.  
   
-So this code is probably drastically overcommented and overexplained already.  
+So this code is probably drastically overcommented and overexplained already.
+
+A second commit was necessary because I managed to forget one vital typo at the last minute and had to fix the whole thing again.  
 
 ### Latest revisions (as of 11-8-15):
 
