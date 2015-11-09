@@ -1,19 +1,23 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 author: "John Barnes"
-date: "17 Oct 2015"
+date: "8 Nov 2015"
 output: html_document
 keep_md: true
 ---
   
-**Reproducible Research course repdata-033**  
+**Reproducible Research course repdata-034**  
   
 ### Introduction/Housekeeping  
 
 **In this paper:**  
 Step counts recorded at five minute intervals for a single individual
 during the months of October and November 2012 are analyzed to answer the
-questions set by the class assignment, in the order given.  
+questions set by the class assignment, in the order given.  Data conversion/massage
+is necessary because  
+1. If the time of each interval is read as a number, ggplot2's plot will interpolate decimal values that should not exist, i.e. between 0:55 and 1:00 it will interpolate  values for 0:60, 0:65 ... 0:90, 0:95.  This would produce a stretched graph with long smooth runs, very false to the original data. Reformatting to date format prevents that.  
+2. Data were found to be missing for 8 complete days, and per the assignment instructions' suggestion, replaced with average interval data. This produced drastically shrunken variances, and might be very misleading in a real world problem.   
+3. Question 4 requires identification of dates as weekend or weekday; a new variable, DayType, with values "Weekday" or "Weekend", had to be created, and values computed, for that purpose.  
   
 **Necessary housekeeping:**  
 * library package loading.  
@@ -29,8 +33,8 @@ suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(magrittr))
 suppressPackageStartupMessages(library(chron))
      ## Establish functions NaRmMean and NaRmMedian
-NaRmMean<-function(x){mean(x,na.rm=TRUE)}
-NaRmMedian<-function(x){median(x,na.rm=TRUE)}
+NaRmMean<-function(x){mean(x,na.rm=TRUE)} #mean function that skips NAs
+NaRmMedian<-function(x){median(x,na.rm=TRUE)}  #median function that skips NAs
 ```
   
 ### Loading and preprocessing the data  
@@ -70,9 +74,11 @@ summary(ActivityData)
 PercentStepsMissing<-100*sum(is.na(ActivityData$steps))/nrow(ActivityData)
 ```
   
-The first summary of ActivityData showed that a value for "steps" was missing in 13.1% of the data, a proportion more than large enough to affect the results of analysis if it were all concentrated in one area. Missing data cases were summarized to determine whether missing values for steps were concentrated in a few places or scattered throughout the data set.
+The first summary of ActivityData showed that a value for "steps" was missing in 13.1% of the data, a proportion more than large enough to affect the results of analysis if it were all concentrated in one area. (Unfortunately as will be seen, the suggested remedy *did* concentrate them in one area).
  
 #### examination of distribution of missing data
+  
+Missing data cases were summarized to determine whether missing values for steps were concentrated in a few places or scattered throughout the data set.  
   
 
 ```r
@@ -83,6 +89,7 @@ NumberDatesMissingSteps<-length(WhichDatesMissingSteps)
 WhichDaysMissingSteps<-weekdays(WhichDatesMissingSteps)
 ```
   
+
 Pulling out the rows where the steps value was missing revealed that the record was actually missing all data for 8 complete days. Those dates were 2012-10-01, 2012-10-08, 2012-11-01, 2012-11-04, 2012-11-09, 2012-11-10, 2012-11-14, 2012-11-30, which fall on Monday, Monday, Thursday, Sunday, Friday, Saturday, Wednesday, Friday respectively.  
   
 Because missing data were distributed evenly across intervals and roughly proportionately between weekdays and weekends, answers for Questions 1 and 2 would not be severely affected. This also provided a good starting point for Questions 3 and 4.  
@@ -90,10 +97,11 @@ Because missing data were distributed evenly across intervals and roughly propor
 #### formatting the variables in ActivityData and creating the DayType variable which will be needed in Question 4. 
   
 **modify the ActivityData dataset:**  
-* numeric values for $steps
-* date values for $date
-* treating $interval as a time (so it won't try to extrapolate meaningless values like "1275". 
-* create a new variable, DayType, a factor with values of "Weekday" or "Weekend", for use in Question 4.
+  
+* numeric values for $steps  
+* date values for $date  
+* treating $interval as a time (so it won't try to extrapolate meaningless values like "1275").  
+* create a new variable, DayType, a factor with values of "Weekday" or "Weekend", for use in Question 4.  
 * Several auxiliary variables will be created and then eliminated in the process.  
   
 
@@ -137,7 +145,8 @@ rm(Leader,Trailer,j,PercentStepsMissing,WhichDaysMissingSteps,WhichDatesMissingS
   
 ### Question 1. What is the mean total number of steps taken per day?
   
-This question required creating a derived dataset of daily step counts (TotalStepsByDate), calculating the mean and median daily 
+This question required creating a derived dataset of daily step counts
+(TotalStepsByDate), calculating the mean and median daily 
 step counts, and preparing a histogram of daily step counts.  
   
 #### initial grouping and summing of steps by date, exported to dataset TotalStepsByDate  
@@ -157,12 +166,26 @@ TotalStepsByDate<-Steps_By_Date%>%summarise_each(funs(sum),steps)
 MeanTotalDailySteps<-NaRmMean(TotalStepsByDate$steps) 
 MedianTotalDailySteps<-NaRmMedian(TotalStepsByDate$steps)
 ```
-The mean total daily steps, ignoring NAs, was found to 
-be 10766, quite close to the median total daily 
-steps of 10765. Closeness of mean and median 
-suggests a normal or binomial distribution. 
+  
+**Mean total daily steps, ignoring NAs:** `rformatC(MeanTotalDailySteps,digits=0,format="f")`   
+**Median total daily steps, ignoring NAs:** `rformatC(MedianTotalDailySteps,digits=0,format="f")`  
   
 ### histogram of daily total steps 
+  
+Binwidth was chosen for 20 bins by successive experiments; 20 produced a 
+pleasing balance between showing detail and leaving a clear overall impression. 
+20 bins also corresponded to a fairly intuitive allocation of values: 8 adjacent bins=10,000,
+2 adjacent bins= 2500.  If distribution were uniform, this would have resulted in
+about 3 cases per bin, a low ragged line across the diagram.  
+  
+In fact, though, there was a very clear central peak. That, plus the closeness 
+of mean and median found above suggests a normal or binomial 
+distribution, so I added an estimated density curve (red curve) and a vertical 
+dark green line to mark the mean/median (on the scale of this drawing,
+they are closer together than a thin linewidth). The resemblance and fit to a Gaussian curve is quite striking.  
+  
+If I were investigating further I would definitely try to fit
+this to a normal or binomial distribution.
   
 
 ```r
@@ -170,16 +193,29 @@ TotalStepsPlot<-ggplot(TotalStepsByDate) #setting up the histogram
 TotalStepsPlot<-TotalStepsPlot + aes(TotalStepsByDate$steps)
 TotalStepsPlot<-TotalStepsPlot + geom_histogram(binwidth=1250, 
                                                 fill="lightblue",
-                                                colour="black",
-                                                ) 
+                                             colour="black",
+                                               alpha=.5,
+                                             na.rm=TRUE) 
       #binwidth chosen to have about 20 bins, 8 bins=10,000, 
       #about 3 cases/bin for a uniform distribution
+TotalStepsPlot<-TotalStepsPlot + geom_density(aes(y=..count..*1250),
+                                              colour="red",
+                                              fill=NA,
+                                              show_guide=TRUE,
+                                              na.rm=TRUE)
+TotalStepsPlot<-TotalStepsPlot + geom_vline(aes(xintercept=MeanTotalDailySteps),
+                                            colour="dark green",
+                                            show_guide=TRUE)
 TotalStepsPlot<-TotalStepsPlot + scale_y_continuous(breaks=0:15)
 TotalStepsPlot<-TotalStepsPlot + labs(title="Distribution of Total Daily Steps")
 TotalStepsPlot<-TotalStepsPlot + labs(x="Total Steps in One Day")
 TotalStepsPlot<-TotalStepsPlot + labs(y="Days")
 
 TotalStepsPlot
+```
+
+```
+## Warning: Removed 8 rows containing non-finite values (stat_density).
 ```
 
 ![plot of chunk histogram of daily total steps](figure/histogram of daily total steps-1.png) 
@@ -227,7 +263,7 @@ AverageIntervalStepsPlot
 MaxAverageIntervalSteps <- max(AverageIntervalSteps$steps)
 MaxAverageInterval<-AverageIntervalSteps[AverageIntervalSteps$steps== MaxAverageIntervalSteps,1]
 ```
-The maximum number of average interval steps was 206.2. 
+**Maximum average interval steps:** 206.2  
 The interval this corresponds to is 0835.  
   
 **Observable features here include: **  
@@ -295,6 +331,8 @@ be 10766, quite close to the median total daily
 steps of 10762. Both these were very close to results found the first time, for reasons discussed below. 
   
 #### histogram of daily total steps 
+I chose to use exactly the same code to produce the histogram, to make
+as direct a comparison as possible.
   
 
 ```r
@@ -302,13 +340,20 @@ TotalStepsPlot<-ggplot(TotalStepsByDate) #setting up the histogram
 TotalStepsPlot<-TotalStepsPlot + aes(TotalStepsByDate$steps)
 TotalStepsPlot<-TotalStepsPlot + geom_histogram(binwidth=1250, 
                                                 fill="lightblue",
-                                                colour="black",
-                                                ) 
+                                             colour="black",
+                                               alpha=.5) 
       #binwidth chosen to have about 20 bins, 8 bins=10,000, 
       #about 3 cases/bin for a uniform distribution
+TotalStepsPlot<-TotalStepsPlot + geom_density(aes(y=..count..*1250),
+                                              colour="red",
+                                              fill=NA,
+                                              show_guide=TRUE)
+TotalStepsPlot<-TotalStepsPlot + geom_vline(aes(xintercept=MeanTotalDailySteps),
+                                            colour="dark green",
+                                            show_guide=TRUE)
 TotalStepsPlot<-TotalStepsPlot + scale_y_continuous(breaks=0:15)
-TotalStepsPlot<-TotalStepsPlot + labs(title="Distribution of Total Daily Steps With Interpolated Values")
-TotalStepsPlot<-TotalStepsPlot + labs(x="Total Steps per One Day")
+TotalStepsPlot<-TotalStepsPlot + labs(title="Distribution of Total Daily Steps")
+TotalStepsPlot<-TotalStepsPlot + labs(x="Total Steps in One Day")
 TotalStepsPlot<-TotalStepsPlot + labs(y="Days")
 
 TotalStepsPlot
@@ -319,9 +364,13 @@ TotalStepsPlot
 #### comparison of the two histograms  
 
 Obviously  kurtosis (spikiness) of the distribution has become much more
-acute with the addition of the interpolated values. The histogram still
-looks roughly like it might be a normal or a  binomial distribution, but
-the peak is proportionately higher, and the standard deviation smaller.
+acute with the addition of the interpolated values. It is quite noticeable how 
+much farther the central column sticks out above the peak in the
+red distribution curve.  
+  
+The histogram still looks roughly like it might be a normal or a  
+binomial distribution, butthe peak is proportionately higher, and the standard
+deviation smaller.
    
 Yet the mean and median are almost the same; the overall center didn't
 change much, but the distribution changed fairly drastically.

@@ -1,3 +1,29 @@
+## Note From the Student  
+  
+
+This draft is prepared from an earlier draft of the Reproducible Research Peer Assessment 1 that was completed before I was forced to drop out of the class by personal circumstances (simply had no time to finish Peer Assessment 2 by deadline).  
+  
+In this draft I’ve done occasional cleanup and “pretty-printing” here and there to make a nice looking portfolio project, and because the process of tidying up has forced me to re-read my old code in detail, noting explanations to myself about what I’ve done in the comments.  
+  
+So this code is probably drastically overcommented and overexplained already.  
+
+### Latest revisions (as of 11-8-15):
+
+* Changed date and course number
+
+* Added explanations for data cleaning and munging to introduction
+
+* Mean and medians for questions 1 and 3 made easier to find by presenting them as Statistic Name: Value instead of embedding them in written text.
+
+* Explanation of binwidth choice added
+
+* Added a red estimated distribution curve and a green vertical line for the mean to the histograms in Plots 1 and 3
+
+* Edited and clarified text throughout
+
+
+
+
 ## Introduction
 
 It is now possible to collect a large amount of data about personal
